@@ -1,0 +1,19 @@
+# Environnements
+conda/
+env/
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Données et modèles binaires
+data/
+models/
+*.pkl
+*.h5
+
+# Config locale de l'éditeur
+.vscode/
