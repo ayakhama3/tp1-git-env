@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fraude / Console de prédiction</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f1f3eb;
+      --muted: #a7aea4;
+      --panel: #1b211d;
+      --edge: #39433a;
+      --lime: #d3f36b;
+      --red: #ff8676;
+      --green: #9ae0ad;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: radial-gradient(ellipse at 80% 0%, #35412d 0, #202820 34%, #111612 78%);
+    }
+    main { width: min(980px, calc(100% - 36px)); margin: 0 auto; padding: 38px 0 56px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 18px; border-bottom: 1px solid var(--edge); padding-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .mark { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--lime); color: var(--lime); transform: rotate(45deg); }
+    .mark span { transform: rotate(-45deg); font-size: 14px; }
+    .service { color: var(--muted); font-size: 13px; }
+    .service::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #9ae0ad80; }
+    .intro { padding: 36px 0 24px; animation: arrive .45s ease-out both; }
+    .eyebrow { margin: 0 0 10px; color: var(--lime); font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; font-weight: 600; }
+    .intro p:last-child { max-width: 620px; margin: 12px 0 0; color: var(--muted); line-height: 1.6; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(270px, .8fr); gap: 24px; align-items: start; }
+    section { border-top: 1px solid var(--edge); padding-top: 18px; }
+    h2 { margin: 0 0 18px; font-size: 16px; font-weight: 600; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; }
+    input, select { width: 100%; min-height: 44px; border: 1px solid var(--edge); border-radius: 4px; background: #121814; color: var(--ink); padding: 0 12px; font: inherit; }
+    input:focus, select:focus { outline: 2px solid var(--lime); outline-offset: 1px; }
+    .actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+    button { min-height: 44px; border: 0; border-radius: 4px; padding: 0 18px; background: var(--lime); color: #182012; font: inherit; font-weight: 700; cursor: pointer; }
+    button:hover { background: #e1ff83; }
+    button:disabled { opacity: .6; cursor: progress; }
+    .sample { border: 0; background: none; color: var(--muted); padding: 8px 0; cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+    .result { min-height: 170px; padding: 20px; border: 1px solid var(--edge); border-radius: 4px; background: #111713b8; }
+    .result-label { margin: 0 0 12px; color: var(--muted); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    .result-value { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; }
+    .result-detail { margin: 12px 0 0; color: var(--muted); line-height: 1.5; }
+    .result.fraud { border-color: #a85046; }
+    .result.fraud .result-value { color: var(--red); }
+    .result.clear { border-color: #527e5c; }
+    .result.clear .result-value { color: var(--green); }
+    .result.error { border-color: #a85046; }
+    .result.error .result-value { color: var(--red); font-size: 20px; }
+    .foot { margin-top: 26px; color: var(--muted); font-size: 12px; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 700px) {
+      main { width: min(100% - 28px, 520px); padding-top: 22px; }
+      header { align-items: flex-start; flex-direction: column; }
+      .intro { padding-top: 28px; }
+      .workspace { grid-template-columns: 1fr; gap: 28px; }
+    }
+    @media (max-width: 420px) { .fields { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><span class="mark"><span>F</span></span> Risk / Lab</div>
+      <div class="service">Service de prédiction connecté</div>
+    </header>
+    <div class="intro">
+      <p class="eyebrow">Modèle fraude · production</p>
+      <h1>Analyser une transaction</h1>
+      <p>Renseigne les quatre variables du modèle pour obtenir sa prédiction.</p>
+    </div>
+    <div class="workspace">
+      <section>
+        <h2>Caractéristiques de la transaction</h2>
+        <form id="prediction-form">
+          <div class="fields">
+            <label for="montant">Montant (€)
+              <input id="montant" name="montant" type="number" min="0" step="0.01" value="8500" required>
+            </label>
+            <label for="anciennete">Ancienneté du compte (ans)
+              <input id="anciennete" name="anciennete" type="number" min="0" step="1" value="3" required>
+            </label>
+            <label for="freq_24h">Transactions sur 24 h
+              <input id="freq_24h" name="freq_24h" type="number" min="0" step="1" value="9" required>
+            </label>
+            <label for="nuit">Transaction de nuit
+              <select id="nuit" name="nuit"><option value="1" selected>Oui</option><option value="0">Non</option></select>
+            </label>
+          </div>
+          <div class="actions">
+            <button id="submit-button" type="submit">Analyser</button>
+            <button class="sample" id="sample-button" type="button">Charger un exemple normal</button>
+          </div>
+        </form>
+      </section>
+      <section>
+        <h2>Résultat</h2>
+        <div class="result" id="result" aria-live="polite">
+          <p class="result-label">En attente d'une analyse</p>
+          <p class="result-value">Aucune prédiction</p>
+          <p class="result-detail">La réponse du modèle s’affichera ici.</p>
+        </div>
+        <p class="foot">Prédiction binaire : fraude ou transaction normale.</p>
+      </section>
+    </div>
+  </main>
+  <script>
+    const form = document.querySelector('#prediction-form');
+    const result = document.querySelector('#result');
+    const submitButton = document.querySelector('#submit-button');
+
+    document.querySelector('#sample-button').addEventListener('click', () => {
+      form.elements.montant.value = '100';
+      form.elements.anciennete.value = '1';
+      form.elements.freq_24h.value = '2';
+      form.elements.nuit.value = '0';
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      submitButton.disabled = true;
+      submitButton.textContent = 'Analyse…';
+      result.className = 'result';
+      result.innerHTML = '<p class="result-label">Analyse en cours</p><p class="result-value">Connexion au modèle…</p>';
+
+      const payload = {
+        dataframe_split: {
+          columns: ['montant', 'anciennete', 'freq_24h', 'nuit'],
+          data: [[Number(form.elements.montant.value), Number(form.elements.anciennete.value), Number(form.elements.freq_24h.value), Number(form.elements.nuit.value)]]
+        }
+      };
+
+      try {
+        const response = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || `Erreur HTTP ${response.status}`);
+        const prediction = body.predictions[0];
+        const fraud = Number(prediction) === 1;
+        result.className = `result ${fraud ? 'fraud' : 'clear'}`;
+        result.innerHTML = `<p class="result-label">Prédiction du modèle</p><p class="result-value">${fraud ? 'Fraude détectée' : 'Transaction normale'}</p><p class="result-detail">Classe prédite : ${fraud ? 1 : 0}</p>`;
+      } catch (error) {
+        result.className = 'result error';
+        result.innerHTML = `<p class="result-label">Prédiction indisponible</p><p class="result-value">Erreur de service</p><p class="result-detail"></p>`;
+        result.querySelector('.result-detail').textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Analyser';
+      }
+    });
+  </script>
+</body>
+</html>
