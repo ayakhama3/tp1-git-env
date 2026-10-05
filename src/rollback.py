@@ -2,6 +2,8 @@ import mlflow
 import pandas as pd
 from mlflow import MlflowClient
 
+# Validation du rollback entre versions de production du modèle fraude.
+
 mlflow.set_tracking_uri('http://127.0.0.1:5000')
 c = MlflowClient()
 X = pd.DataFrame([{'montant': 8500.0, 'anciennete': 3, 'freq_24h': 9, 'nuit': 1}])
